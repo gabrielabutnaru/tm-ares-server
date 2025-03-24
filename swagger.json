@@ -1,0 +1,732 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Terraforming Mars Ares Expedition",
+    "version": "1.0"
+  },
+  "tags": [
+    {
+      "name": "board",
+      "description": "Collection for game board and players board in a specific game"
+    },
+    {
+      "name": "deck",
+      "description": "Collection for decks of cards (hand deck, played deck, research deck)"
+    },
+    {
+      "name": "game",
+      "description": "Collection for keeping track of game rooms, rounds and phases"
+    },
+    {
+      "name": "user",
+      "description": "Collection for users data (auth, joined games etc.)"
+    }
+  ],
+  "paths": {
+    "/game/create-room": {
+      "post": {
+        "summary": "Create a new game room",
+        "tags": [
+          "game"
+        ],
+        "description": "Create a new game room and initialize the resources for the respective game",
+        "responses": {
+          "201": {
+            "description": "Game room created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "1234",
+                      "description": "Room code to share with friends"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authorized"
+          }
+        }
+      }
+    },
+    "/game/join-room/{code}": {
+      "post": {
+        "summary": "Join a room",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "description": "Code of the game room to join",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "1234"
+            }
+          }
+        ],
+        "tags": [
+          "game"
+        ],
+        "description": "Joins a room based on the provided code",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "cm8es40nx000008l11nobbe1h",
+                      "description": "The id of the joined game"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "404": {
+            "description": "Code not found"
+          },
+          "409": {
+            "description": "Room is full (4 players already joined)"
+          }
+        }
+      }
+    },
+    "/game/{gameId}/current-round": {
+      "get": {
+        "summary": "Get current round data",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "description": "The id of the game for which to get the current round",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cm8es40nx000008l11nobbe1h"
+            }
+          }
+        ],
+        "tags": [
+          "game"
+        ],
+        "description": "Get the data for the current round of the game",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Round"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "404": {
+            "description": "Round not found"
+          }
+        }
+      }
+    },
+    "/game/{gameId}/select-phase": {
+      "post": {
+        "summary": "Select phase for current round",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "description": "The id of the game for which to select a phase",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cm8es40nx000008l11nobbe1h"
+            }
+          }
+        ],
+        "tags": [
+          "game"
+        ],
+        "description": "Select a phase for the current round",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "Can't select the respective phase (was selected in the previous round)"
+          }
+        }
+      }
+    },
+    "/game/{gameId}": {
+      "delete": {
+        "summary": "Delete a game",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "description": "The id of the game to delete",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cm8es40nx000008l11nobbe1h"
+            }
+          }
+        ],
+        "tags": [
+          "game"
+        ],
+        "description": "Delete the specified game",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Unauthorized (only game owner can delete the game)"
+          }
+        }
+      }
+    },
+    "/board/{gameId}/game": {
+      "get": {
+        "summary": "Get the game board",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "description": "The id of the game for which to get the board",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cm8es40nx000008l11nobbe1h"
+            }
+          }
+        ],
+        "tags": [
+          "board"
+        ],
+        "description": "Get the game board",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameBoard"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "404": {
+            "description": "Board not found"
+          }
+        }
+      }
+    },
+    "/board/{gameId}/player/{color}": {
+      "get": {
+        "summary": "Get the player board",
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "description": "The id of the game for which to get the player board",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cm8es40nx000008l11nobbe1h"
+            }
+          },
+          {
+            "name": "color",
+            "in": "path",
+            "description": "The color of the player for which to get the player board",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PlayerColor"
+            }
+          }
+        ],
+        "tags": [
+          "board"
+        ],
+        "description": "Get the player board",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerBoard"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "404": {
+            "description": "Board not found"
+          }
+        }
+      }
+    },
+    "/deck/{gameId}/player/{color}/type/{deckType}": {
+      "get": {
+        "summary": "Get the player cards for the specified deck",
+        "tags": [
+          "deck"
+        ],
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "description": "The id of the game for which to get the player specified deck",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cm8es40nx000008l11nobbe1h"
+            }
+          },
+          {
+            "name": "color",
+            "in": "path",
+            "description": "The color of the player for which to get the player specified deck",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PlayerColor"
+            }
+          },
+          {
+            "name": "deckType",
+            "in": "path",
+            "description": "The specified deck type",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/DeckType"
+            }
+          }
+        ],
+        "description": "Get the player specified deck",
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Card"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "404": {
+            "description": "Deck not found"
+          }
+        }
+      }
+    },
+    "/deck/{gameId}/play-card/{cardName}": {
+      "post": {
+        "summary": "Play a card",
+        "tags": [
+          "deck"
+        ],
+        "parameters": [
+          {
+            "name": "gameId",
+            "in": "path",
+            "description": "The id of the game for which to play the card",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "cm8es40nx000008l11nobbe1h"
+            }
+          },
+          {
+            "name": "cardName",
+            "in": "path",
+            "description": "The card to be played",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Card"
+            }
+          }
+        ],
+        "description": "Play a card",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Not authorized"
+          },
+          "404": {
+            "description": "Card not found"
+          },
+          "409": {
+            "description": "Card can't be played at this point in the game"
+          }
+        }
+      }
+    },
+    "/user/{userId}": {
+      "get": {
+        "summary": "Get user data",
+        "tags": [
+          "user"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "username": {
+                      "type": "string"
+                    },
+                    "games": {
+                      "type": "array",
+                      "items": {
+                        "description": "User's games' ids",
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/register": {
+      "post": {
+        "summary": "Register a user on the platform",
+        "tags": [
+          "user"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/user/login": {
+      "post": {
+        "summary": "Log in a user on the platform",
+        "tags": [
+          "user"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Card": {
+        "type": "string",
+        "example": "wood_burning_stoves"
+      },
+      "DeckType": {
+        "type": "string",
+        "enum": [
+          "hand",
+          "research",
+          "played",
+          "first-hand"
+        ]
+      },
+      "Phase": {
+        "type": "string",
+        "enum": [
+          "development",
+          "construction",
+          "action",
+          "production",
+          "research"
+        ]
+      },
+      "Round": {
+        "type": "object",
+        "properties": {
+          "activePhases": {
+            "type": "object",
+            "properties": {
+              "red": {
+                "nullable": true,
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Phase"
+                  }
+                ]
+              },
+              "green": {
+                "nullable": true,
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Phase"
+                  }
+                ]
+              },
+              "blue": {
+                "nullable": true,
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Phase"
+                  }
+                ]
+              },
+              "yellow": {
+                "nullable": true,
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Phase"
+                  }
+                ]
+              }
+            }
+          },
+          "currentPhase": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Phase"
+              }
+            ]
+          },
+          "activatedPhaseLastRound": {
+            "type": "object",
+            "properties": {
+              "red": {
+                "nullable": true,
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Phase"
+                  }
+                ]
+              },
+              "green": {
+                "nullable": true,
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Phase"
+                  }
+                ]
+              },
+              "blue": {
+                "nullable": true,
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Phase"
+                  }
+                ]
+              },
+              "yellow": {
+                "nullable": true,
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/Phase"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "PlayerColor": {
+        "type": "string",
+        "enum": [
+          "red",
+          "blue",
+          "yellow",
+          "green"
+        ]
+      },
+      "PlayerBoard": {
+        "type": "object",
+        "properties": {
+          "forestTokens": {
+            "type": "number",
+            "minimum": 0
+          },
+          "generation": {
+            "type": "object",
+            "properties": {
+              "megaCredits": {
+                "type": "number",
+                "minimum": 0
+              },
+              "cards": {
+                "type": "number",
+                "minimum": 0
+              },
+              "heat": {
+                "type": "number",
+                "minimum": 0
+              },
+              "plants": {
+                "type": "number",
+                "minimum": 0
+              },
+              "steel": {
+                "type": "number",
+                "minimum": 0
+              },
+              "titanium": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "liquidity": {
+            "type": "object",
+            "properties": {
+              "megaCredits": {
+                "type": "number",
+                "minimum": 0
+              },
+              "heat": {
+                "type": "number",
+                "minimum": 0
+              },
+              "plants": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "GameBoard": {
+        "type": "object",
+        "properties": {
+          "terraformingRating": {
+            "type": "object",
+            "properties": {
+              "red": {
+                "type": "number"
+              },
+              "blue": {
+                "type": "number"
+              },
+              "green": {
+                "type": "number"
+              },
+              "yellow": {
+                "type": "number"
+              }
+            }
+          },
+          "temperature": {
+            "type": "number",
+            "maximum": 8,
+            "minimum": -30
+          },
+          "oxygen": {
+            "type": "number",
+            "maximum": 14,
+            "minimum": 0
+          },
+          "oceans": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "unflipped",
+                "plant_2m",
+                "card",
+                "plant_1m",
+                "2plants",
+                "card_plant",
+                "4m",
+                "card_1m"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
