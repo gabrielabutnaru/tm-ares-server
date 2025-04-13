@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./tfares.db"
+}
+
+model User {
+  id String @id @default(cuid(2))
+  email String @unique
+  username String @unique
+  password String
+
+  @@map("users")
+}
